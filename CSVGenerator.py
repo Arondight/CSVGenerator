@@ -69,7 +69,6 @@ class CSVGenerator (object):
                                 default = 4,
                                 help = 'number of process, default is 4,'
                                         + ' only work with --directory')
-        self._parser = parser
         self._args = parser.parse_args ()
 
     def _sigbind (self):
@@ -93,7 +92,7 @@ class CSVGenerator (object):
         char_set = string.ascii_letters + string.digits + '_'
 
         if self._quit:
-            return
+            return True
 
         logging.basicConfig (
             format = "%(asctime)-19.19s %(message)s",
@@ -127,18 +126,18 @@ class CSVGenerator (object):
         except Exception as e:
             print (e)
 
+        return True
+
     def run (self):
         args = self._args
-        retok = True
         futures = []
 
         if args.file:
-            self._generate (args.file, args)
-            return
+            return self._generate (args.file, args)
 
         if not args.directory:
-            self._parser.print_help ()
-            return
+            print ("Wrong option, run with '-h' to show help.", file=sys.stderr)
+            return False
 
         if not os.path.exists (args.directory):
             try:
@@ -151,7 +150,12 @@ class CSVGenerator (object):
                 file = os.path.join (args.directory, str (count) + '.csv')
                 futures.append (executor.submit (self._generate, file, args))
 
+        return True
+
 if '__main__' == __name__:
+    ret = True
     generator = CSVGenerator ()
-    generator.run ()
+
+    ret = generator.run ()
+    exit (not ret)
 
